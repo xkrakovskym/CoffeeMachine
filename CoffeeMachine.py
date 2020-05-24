@@ -1,42 +1,48 @@
 from enum import Enum
 
 
-class Espresso(Enum):
-    water = 250
-    milk = 0
-    coffee = 16
-    price = 4
+class CoffeeType(Enum):
+    Espresso = {'water': 250, 'milk': 0, 'coffee': 16, 'price': 4}
+    Latte = {'water': 350, 'milk': 75, 'coffee': 20, 'price': 7}
+    Cappuccino = {'water': 200, 'milk': 100, 'coffee': 12, 'price': 6}
 
 
-class Latte(Enum):
-    water = 350
-    milk = 75
-    coffee = 20
-    price = 7
+class MachineState(Enum):
+    mainMenu = 1
+    buyMenu = 2
+    fillWater = 3
+    fillMilk = 4
+    fillCoffee = 5
+    fillCups = 6
+    exitState = 7
 
-
-class Cappuccino(Enum):
-    water = 200
-    milk = 100
-    coffee = 12
-    price = 6
+    def __str__(self):
+        return self._state.name
 
 
 class CoffeeMachine(object):
-    def __init__(self, water, milk, coffee, cups, money):
-        self.water = water
-        self.milk = milk
-        self.coffee = coffee
-        self.cups = cups
-        self.money = money
 
-    def print_state(self):
-        print('The coffee machine has:')
-        print('{} of water'.format(self.water))
-        print('{} of milk'.format(self.milk))
-        print('{} of coffee beans'.format(self.coffee))
-        print('{} of disposable cups'.format(self.cups))
-        print('{} of money'.format(self.money))
+    def __init__(self, water, milk, coffee, cups, money):
+        self._contents = {'water': 200, 'milk': 100, 'coffee': 12, 'cups': 9, 'money': 500}
+        self._state = MachineState(MachineState.buyMenu)
+
+    def __str__(self):
+        print_list = list(self._contents.values())
+        return """The coffee machine has:
+                {amounts[0]} of water
+                {amounts[1]} of milk
+                {amounts[2]} of coffee
+                {amounts[3]} of disposable cups
+                {amounts[4]} of money""".format(amounts=print_list)
+
+    def process_input(self):
+        pass
+
+    def is_running(self):
+        if self._state == MachineState.exitState:
+            return False
+        else:
+            return True
 
     def action(self):
         while True:
@@ -50,20 +56,20 @@ class CoffeeMachine(object):
             elif action == 'take':
                 self.take()
             elif action == 'remaining':
-                self.print_state()
+                print(self)
             elif action == 'exit':
                 break
             print()
 
     def check_resources(self, coffee_type):
-        if self.water - coffee_type.water.value < 0:
-            return False, coffee_type.water.name
-        if self.milk - coffee_type.milk.value < 0:
-            return False, coffee_type.milk.name
-        if self.coffee - coffee_type.coffee.value < 0:
-            return False, coffee_type.coffee.name
-        if self.cups - 1 < 0:
-            return False, coffee_type.coffee.name
+        if self._contents['water'] - coffee_type.value['water'] < 0:
+            return False, 'water'
+        if self._contents['milk'] - coffee_type.value['milk'] < 0:
+            return False, 'milk'
+        if self._contents['coffee'] - coffee_type.value['coffee'] < 0:
+            return False, 'coffee'
+        if self._contents['cups'] - 1 < 0:
+            return False, 'cups'
         return True, None
 
     def make_coffee(self, coffee_type):
@@ -74,35 +80,35 @@ class CoffeeMachine(object):
             print('Sorry, not enough {}!'.format(missing_resource))
             return None
 
-        self.water -= coffee_type.water.value
-        self.milk -= coffee_type.milk.value
-        self.coffee -= coffee_type.coffee.value
-        self.cups -= 1
-        self.money += coffee_type.price.value
+        self._contents['water'] -= coffee_type.value['water']
+        self._contents['milk'] -= coffee_type.value['milk']
+        self._contents['coffee'] -= coffee_type.value['coffee']
+        self._contents['cups'] -= 1
+        self._contents['money'] += coffee_type.value['price']
 
     def buy(self):
         print('What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino:')
         coffee = input()
         if coffee == '1':
-            self.make_coffee(Espresso)
+            self.make_coffee(CoffeeType.Espresso)
         elif coffee == '2':
-            self.make_coffee(Latte)
+            self.make_coffee(CoffeeType.Latte)
         elif coffee == '3':
-            self.make_coffee(Cappuccino)
+            self.make_coffee(CoffeeType.Cappuccino)
 
     def fill(self):
         print('Write how many ml of water do you want to add:')
-        self.water += int(input())
+        self._contents['water'] += int(input())
         print('Write how many ml of milk do you want to add:')
-        self.milk += int(input())
+        self._contents['milk'] += int(input())
         print('Write how many grams of coffee beans do you want to add:')
-        self.coffee += int(input())
+        self._contents['coffee'] += int(input())
         print('Write how many disposable cups of coffee do you want to add:')
-        self.cups += int(input())
+        self._contents['cups'] += int(input())
 
     def take(self):
-        print('I gave you ${}'.format(self.money))
-        self.money = 0
+        print('I gave you ${}'.format(self._contents['money']))
+        self._contents['money'] = 0
 
 
 def main():
