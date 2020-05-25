@@ -45,17 +45,16 @@ class CoffeeMachine(object):
         if self._state == MachineState.exitState:
             return False
         else:
+            print(self._state.value)
             return True
 
     def action(self, user_input=None):
         if self._state == MachineState.mainMenu:
             if user_input == 'buy':
-                print(self._state.buyMenu.value)
                 self._state = MachineState.buyMenu
                 return self.is_running()
             elif user_input == 'fill':
                 self._state = MachineState.fillWater
-                print(MachineState.fillWater.value)
                 return self.is_running()
             elif user_input == 'remaining':
                 print(self)
@@ -66,8 +65,7 @@ class CoffeeMachine(object):
             elif user_input == 'exit':
                 self._state = MachineState.exitState
                 return self.is_running()
-
-            print(self._state.mainMenu.value)
+            return self.is_running()
 
         elif self._state == MachineState.buyMenu:
             self.buy(user_input)
@@ -78,17 +76,14 @@ class CoffeeMachine(object):
             self._state = MachineState.fillMilk
 
         elif self._state == MachineState.fillMilk:
-            print(self._state.fillMilk.value)
             self.fill('milk', user_input)
             self._state = MachineState.fillCoffee
 
         elif self._state == MachineState.fillCoffee:
-            print(self._state.fillCoffee.value)
             self.fill('coffee', user_input)
             self._state = MachineState.fillCups
 
         elif self._state == MachineState.fillCups:
-            print(self._state.fillCups.value)
             self.fill('cups', user_input)
             self._state = MachineState.mainMenu
         return self.is_running()
