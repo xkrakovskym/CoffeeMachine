@@ -1,4 +1,5 @@
 from enum import Enum
+import abc
 
 
 class CoffeeType(Enum):
@@ -16,8 +17,9 @@ class MachineState(Enum):
     fillCups = 'Write how many disposable cups of coffee do you want to add:'
     exitState = 'You are more than welcome next time!'
 
-    def __str__(self):
-        return self._state.name
+    @abc.abstractmethod
+    def move_on(self):
+        return
 
 
 class CoffeeMachine(object):
@@ -27,66 +29,61 @@ class CoffeeMachine(object):
         self._state = MachineState(MachineState.mainMenu)
 
     def __str__(self):
-        print_list = list(self._contents.values())
+        content_amounts = list(self._contents.values())
         return """The coffee machine has:
                 {amounts[0]} of water
                 {amounts[1]} of milk
                 {amounts[2]} of coffee
                 {amounts[3]} of disposable cups
-                {amounts[4]} of money""".format(amounts=print_list)
+                {amounts[4]} of money""".format(amounts=content_amounts)
 
     def __repr__(self):
         return self._contents
-
-    def process_input(self):
-        pass
 
     def is_running(self):
         if self._state == MachineState.exitState:
             return False
         else:
-            print(self._state.value)
             return True
 
     def action(self, user_input=None):
         if self._state == MachineState.mainMenu:
             if user_input == 'buy':
                 self._state = MachineState.buyMenu
-                return self.is_running()
             elif user_input == 'fill':
                 self._state = MachineState.fillWater
-                return self.is_running()
             elif user_input == 'remaining':
-                print(self)
-                return self.is_running()
+                return self.__str__() + '\n' + self._state.mainMenu.value
             elif user_input == 'take':
-                print(self.take())
-                return self.is_running()
+                return self.take() + '\n' + self._state.mainMenu.value
             elif user_input == 'exit':
                 self._state = MachineState.exitState
-                return self.is_running()
-            return self.is_running()
+
+            return self._state.value
 
         elif self._state == MachineState.buyMenu:
-            self.buy(user_input)
             self._state = MachineState.mainMenu
+            return self.buy(user_input) + '\n' + self._state.mainMenu.value
 
         elif self._state == MachineState.fillWater:
             self.fill('water', user_input)
             self._state = MachineState.fillMilk
+            return self._state.value
 
         elif self._state == MachineState.fillMilk:
             self.fill('milk', user_input)
             self._state = MachineState.fillCoffee
+            return self._state.value
 
         elif self._state == MachineState.fillCoffee:
             self.fill('coffee', user_input)
             self._state = MachineState.fillCups
+            return self._state.value
 
         elif self._state == MachineState.fillCups:
             self.fill('cups', user_input)
             self._state = MachineState.mainMenu
-        return self.is_running()
+            return self._state.value
 
     def check_resources(self, coffee_type):
         if self._contents['water'] - coffee_type.value['water'] < 0:
@@ -102,12 +99,9 @@ class CoffeeMachine(object):
     def make_coffee(self, coffee_type):
         enough_resources, missing_resource = self.check_resources(coffee_type)
         if enough_resources:
-            print('I have enough resources, making you a coffee!')
-            self._state = MachineState.mainMenu
+            output = 'I have enough resources, making you a coffee!'
         else:
-            print('Sorry, not enough {}!'.format(missing_resource))
-            self._state = MachineState.mainMenu
-            return None
+            output = 'Sorry, not enough {}!'.format(missing_resource)
 
         self._contents['water'] -= coffee_type.value['water']
         self._contents['milk'] -= coffee_type.value['milk']
@@ -115,35 +109,41 @@ class CoffeeMachine(object):
         self._contents['cups'] -= 1
         self._contents['money'] += coffee_type.value['price']
 
+        return output
+
     def buy(self, user_input):
         if user_input == '1':
-            self.make_coffee(CoffeeType.Espresso)
+            return self.make_coffee(CoffeeType.Espresso)
         elif user_input == '2':
-            self.make_coffee(CoffeeType.Latte)
+            return self.make_coffee(CoffeeType.Latte)
         elif user_input == '3':
-            self.make_coffee(CoffeeType.Cappuccino)
+            return self.make_coffee(CoffeeType.Cappuccino)
 
     def fill(self, content_type, user_input):
         self._contents[content_type] += int(user_input)
 
     def take(self):
+        output = 'I gave you ${}'.format(self._contents['money'])
         self._contents['money'] = 0
-        return'I gave you ${}'.format(self._contents['money'])
+        return output
 
 
-class InputProcessor:
-    pass
+class InputProcessor(object):
+
+    def print_to_user(self, output):
+        print(output)
+
+    # input also here
 
 
 def main():
     coffee_machine_bratislava = CoffeeMachine(400, 540, 120, 9, 550)
-    coffee_machine_bratislava.action()
+    machine_interface = InputProcessor()
+    user_input = None
 
-    while True:
+    while coffee_machine_bratislava.is_running():
+        machine_interface.print_to_user(coffee_machine_bratislava.action(user_input))
         user_input = input()
-        is_running = coffee_machine_bratislava.action(user_input)
-        if not is_running:
-            break
 
 
 if __name__ == "__main__":
